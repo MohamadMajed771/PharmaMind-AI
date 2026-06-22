@@ -2,6 +2,7 @@ import streamlit as st
 from services.drug_ai_service import analyze_drug
 from services.drug_validator import find_drug_match
 from services.drug_comparison_service import compare_drugs
+from services.quiz_service import generate_quiz
 
 st.set_page_config(
     page_title="PharmaMind AI",
@@ -38,7 +39,7 @@ st.markdown("""
 st.sidebar.title("💊 PharmaMind AI")
 page = st.sidebar.radio(
     "Choose Module",
-    ["Drug Monograph", "Drug Comparison"]
+    ["Drug Monograph", "Drug Comparison", "Quiz Generator"]
 )
 
 st.markdown('<div class="big-title">💊 PharmaMind AI</div>', unsafe_allow_html=True)
@@ -211,3 +212,33 @@ elif page == "Drug Comparison":
 
         st.markdown(f"## {drug1} vs {drug2}")
         st.markdown(result)
+
+elif page == "Quiz Generator":
+    st.header("🎓 Quiz Generator")
+
+    quiz_drug = st.text_input(
+        "Enter a drug name for quiz generation",
+        placeholder="Example: Dapagliflozin, Warfarin, Amoxicillin"
+    )
+
+    if st.button("🎓 Generate Quiz", use_container_width=True):
+        if not quiz_drug.strip():
+            st.warning("Please enter a drug name.")
+            st.stop()
+
+        matched_drug = find_drug_match(quiz_drug)
+
+        if matched_drug is not None and matched_drug.lower() != quiz_drug.lower():
+            st.warning(
+                f'No exact match found for "{quiz_drug}". Using closest match: "{matched_drug}".'
+            )
+        else:
+            matched_drug = quiz_drug
+
+        with st.spinner(f"Generating pharmacy quiz for {matched_drug}..."):
+            quiz = generate_quiz(matched_drug)
+
+        st.success("Quiz generated.")
+
+        st.markdown(f"## 🎓 Quiz: {matched_drug}")
+        st.markdown(quiz)
